@@ -1,94 +1,96 @@
 # vending-machine-3d
 
-> Máy bán nước tự động **3D** chạy trên trình duyệt (three.js): vừa là **editor** để xếp hàng vào máy, vừa là **mô phỏng** mua hàng thật: thả tiền ảo, bấm mã trên bàn phím số, xem món hàng rơi xuống khay.
-> Toàn bộ máy được mô tả bằng **một file XML**, giống cách mxGraph/draw.io lưu sơ đồ: lưu DB được, tải về được, import lại là dựng y nguyên.
+**English** | [Tiếng Việt](README.vi.md)
 
-- **100% client-side.** Không cần back-end, hạ tầng hay database. Lưu XML ở đâu là chuyện của bên dùng.
-- **Siêu nhẹ.** Mọi hình 3D và texture được sinh bằng code (không có file ảnh hay model), không cần Blender. Lõi khoảng **22 KB gzip** (chưa tính three.js).
-- **Một lõi, hai cách dùng.** JS thuần (ESM, hoặc một thẻ `<script>` UMD) và **Vue 3** (component có `v-model`).
-- **Animation tự viết.** Camera, lò xo quay, hàng rơi có gia tốc và nảy; không dùng engine vật lý.
+> A browser-based **3D vending machine** (three.js) that is both an **editor**, for stocking the machine with products, and a **simulator**, for buying from it like a real one: insert virtual money, type a code on the keypad, and watch the item drop into the tray.
+> The whole machine is described by **a single XML file**, the same way mxGraph/draw.io stores diagrams. Store it in a database, download it, import it again and you get exactly the same machine.
+
+- **100% client-side.** No back-end, infrastructure or database. Where you keep the XML is up to you.
+- **Ultra lightweight.** Every 3D shape and texture is generated in code (no image or model files, no Blender). The core is about **22 KB gzip**, excluding three.js.
+- **One core, two ways to use it.** Plain JS (ESM, or a single UMD `<script>` tag) and **Vue 3** (a component with `v-model`).
+- **Hand-written animation.** Camera moves, spinning spiral, items falling with gravity and bouncing; no physics engine.
 
 ---
 
-## Mục lục
+## Table of contents
 
-- [Tính năng](#tính-năng)
-- [Cài đặt](#cài-đặt)
-- [Dùng nhanh](#dùng-nhanh): [JS thuần](#js-thuần-esm) · [UMD](#một-thẻ-script-umd) · [Vue 3](#vue-3)
-- [Hai chế độ: Edit và Play](#hai-chế-độ-edit-và-play)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick start](#quick-start): [Plain JS](#plain-js-esm) · [UMD](#single-script-tag-umd) · [Vue 3](#vue-3)
+- [Two modes: Edit and Play](#two-modes-edit-and-play)
 - [Options](#options)
 - [API](#api)
 - [Events](#events)
-- [Định dạng XML](#định-dạng-xml-version-1)
-- [Phím tắt](#phím-tắt)
-- [Tùy biến giao diện](#tùy-biến-giao-diện)
-- [Kiến trúc](#kiến-trúc)
-- [Phát triển](#phát-triển)
-- [Giới hạn đã biết và hướng phát triển](#giới-hạn-đã-biết-và-hướng-phát-triển)
-- [Tài liệu liên quan](#tài-liệu-liên-quan)
+- [XML format](#xml-format-version-1)
+- [Keyboard shortcuts](#keyboard-shortcuts)
+- [Theming](#theming)
+- [Architecture](#architecture)
+- [Development](#development)
+- [Known limitations and roadmap](#known-limitations-and-roadmap)
+- [Related documents](#related-documents)
 
 ---
 
-## Tính năng
+## Features
 
-**Máy**
-- Lưới khe tùy chỉnh: **4–6 tầng × 6–10 khe mỗi tầng** (mặc định 6 × 10 = 60 khe). Bề ngang máy co giãn theo số khe.
-- Mã khe cố định = số tầng + số khe 2 chữ số, **tầng 1 ở trên cùng**: `101`…`110`, …, `601`…`610`. Tem mã in trên mép kệ.
-- Mỗi khe có một lò xo xoắn, sức chứa `capacity` món (mặc định 8, tối đa 12). Vị trí từng món là **preset** theo lưới. Tọa độ x/y/z chỉ hiển thị, không sửa.
-- 4 dạng hàng vẽ bằng code: **lon** (`can`), **chai** (`bottle`), **hộp** (`box`), **túi snack** (`bag`). Nhãn (màu, sọc, chữ) được vẽ trên canvas.
-- Thân máy gồm mặt kính, header in tên máy, màn LED, bàn phím 3×4 (`1–9`, `C`, `0`, `OK`), khe tiền, nút trả tiền, khay lấy hàng.
+**Machine**
+- Configurable slot grid: **4–6 rows × 6–10 slots per row** (default 6 × 10 = 60 slots). The machine width scales with the number of slots.
+- Fixed slot codes = row number + 2-digit slot number, **row 1 at the top**: `101`…`110`, …, `601`…`610`. Code tags are printed on the shelf edge.
+- Each slot has a spiral coil holding up to `capacity` items (default 8, max 12). Item positions are **presets** derived from the grid; x/y/z coordinates are shown read-only, never edited.
+- Four product shapes drawn in code: **can**, **bottle**, **box** and **snack bag**. Labels (colour, stripes, text) are painted on a canvas.
+- Cabinet with glass front, header with the machine name, LED display, 3×4 keypad (`1–9`, `C`, `0`, `OK`), coin slot, refund button and pickup tray.
 
-**Editor (chế độ Edit)**
-- Máy 3D chiếm toàn khung, các panel nổi thu gọn được và toolbar tự mờ khi không dùng.
-- Click một khe thì camera zoom vào và hiện **menu nổi**: chọn loại hàng / để trống, đặt giá, tồn kho; tọa độ chỉ đọc.
-- **Panel loại hàng:** thêm, sửa, xóa (tên, dạng, màu, chữ nhãn, màu chữ, màu nhấn).
-- **Panel cài đặt máy** (nút ⚙): tên máy, số tầng/khe, sức chứa, màu thân, màu nhấn, độ trong của kính.
-  - Thu nhỏ lưới mà có khe đang có hàng bị loại ra thì hiện hộp xác nhận liệt kê mã khe.
-  - Giảm sức chứa thì tồn kho bị cắt bớt, cũng có xác nhận.
-- **Toolbar:** Mới (chọn kích thước lưới) · Mở XML · Tải XML · ⚙ · Hoàn tác / Làm lại (tối đa 50 bước).
+**Editor (Edit mode)**
+- The 3D machine fills the whole container, with floating panels that collapse and a toolbar that fades when idle.
+- Click a slot: the camera zooms in and a **floating menu** opens to pick a product (or leave it empty) and set price and stock. Coordinates are read-only.
+- **Item type panel:** add, edit and delete types (name, shape, colour, label text, label colour, accent colour).
+- **Machine settings panel** (⚙ button): name, rows/slots, capacity, body colour, accent colour, glass opacity.
+  - Shrinking the grid when stocked slots would fall outside it opens a confirmation listing the affected codes.
+  - Lowering the capacity trims stock, also after confirmation.
+- **Toolbar:** New (choose grid size) · Open XML · Download XML · ⚙ · Undo / Redo (up to 50 steps).
 
-**Mô phỏng (chế độ Play)**
-- Panel nạp tiền theo các mệnh giá cấu hình sẵn, kèm nút trả tiền.
-- Bấm mã trên **bàn phím 3D** (bằng chuột hoặc cảm ứng), bằng bàn phím máy tính, hoặc qua API.
-- Kiểm tra theo thứ tự: mã sai (`MA SAI`), hết hàng (`HET HANG`), thiếu tiền (`THIEU 5.000`).
-- Hợp lệ thì camera lùi ra, lò xo quay một vòng, món hàng trượt ra, lật, rơi và nảy trong khay. LED hiện `TIEN THOI …` (máy thối toàn bộ số dư sau mỗi lần mua).
-- Bàn phím và tiền bị khóa trong lúc hàng đang rơi, nên không thể trừ tiền hai lần.
-- Click món trong khay để lấy hàng.
-- **Sandbox hoặc lưu thật:** xem `persistSales`.
+**Simulator (Play mode)**
+- Money panel with the configured denominations, plus a refund button.
+- Type the code on the **3D keypad** (mouse or touch), on the computer keyboard, or through the API.
+- Checks run in order: invalid code (`MA SAI`), sold out (`HET HANG`), insufficient money (`THIEU 5.000`).
+- On a valid purchase the camera pulls back, the spiral turns once, and the item slides off, tips over, falls and bounces in the tray. The LED shows the change (`TIEN THOI …`); the full remaining balance is returned after each purchase.
+- Keypad and money are locked while an item is falling, so a purchase can never be charged twice.
+- Click an item in the tray to take it.
+- **Sandbox or persisted sales:** see `persistSales`.
 
 ---
 
-## Cài đặt
+## Installation
 
 ```bash
 npm i vending-machine-3d three
 ```
 
-- `three` là peer dependency (`>=0.160`).
-- `vue` là peer dependency tùy chọn, chỉ cần khi dùng entry `vending-machine-3d/vue`.
+- `three` is a peer dependency (`>=0.160`).
+- `vue` is an optional peer dependency, needed only for the `vending-machine-3d/vue` entry.
 
-## Dùng nhanh
+## Quick start
 
-### JS thuần (ESM)
+### Plain JS (ESM)
 
 ```js
 import { createVendingMachine } from 'vending-machine-3d';
 
 const vm = createVendingMachine(document.getElementById('machine'), {
-  xml,                                   // tùy chọn: bỏ trống thì là máy trống 6×10
+  xml,                                   // optional: an empty 6×10 machine if omitted
   mode: 'edit',                          // 'edit' | 'play'
   denominations: [5000, 10000, 20000],
 });
 
-vm.on('change', ({ xml }) => saveToDb(xml));     // editor thay đổi → lưu DB
+vm.on('change', ({ xml }) => saveToDb(xml));     // editor changed → save it
 vm.on('purchase', (e) => console.log(e));        // { code, itemType, price, change }
 ```
 
-Khung chứa cần có chiều cao, ví dụ `#machine { height: 600px }`. Canvas tự co giãn theo khung.
+The container needs a height, e.g. `#machine { height: 600px }`. The canvas resizes with it.
 
-### Một thẻ `<script>` (UMD)
+### Single `<script>` tag (UMD)
 
-File UMD đã bundle sẵn three.js, không cần bundler:
+The UMD file bundles three.js, so no bundler is needed:
 
 ```html
 <div id="machine" style="height:600px"></div>
@@ -96,7 +98,7 @@ File UMD đã bundle sẵn three.js, không cần bundler:
 <script>
   const vm = VendingMachine3D.createVendingMachine(document.getElementById('machine'), {
     xml,
-    allowEdit: false,          // máy chỉ bán
+    allowEdit: false,          // sell-only machine
   });
 </script>
 ```
@@ -124,43 +126,53 @@ const denominations = [1000, 2000, 5000, 10000, 20000, 50000];
 </template>
 ```
 
-- Đăng ký global: `app.use(VendingMachinePlugin)`.
-- Qua `ref` của component có `instance` (đối tượng lõi), `toXML()`, `download()`, `load()`, `insertMoney()`, `press()`, `select()`, `refund()`, `setMode()`.
+- Global registration: `app.use(VendingMachinePlugin)`.
+- Through the component `ref` you get `instance` (the core object), `toXML()`, `download()`, `load()`, `insertMoney()`, `press()`, `select()`, `refund()` and `setMode()`.
 - Emits: `update:xml`, `update:mode`, `change`, `purchase`, `error`, `warning`, `balance`, `ready`.
-- Prop `xml` không gây vòng lặp: nếu parent gán lại đúng chuỗi vừa được emit thì máy không load lại.
-- Đổi các prop "cấu trúc" (`allowEdit`, `persistSales`, `denominations`, `ui`, `messages`, `currency`) **theo giá trị** thì máy được dựng lại từ XML hiện tại. Mảng hoặc object viết thẳng trong template không gây dựng lại.
+- The `xml` prop never causes a loop: if the parent passes back the exact string that was just emitted, the machine does not reload.
+- Changing a "structural" prop (`allowEdit`, `persistSales`, `denominations`, `ui`, `messages`, `currency`) **by value** rebuilds the machine from its current XML. Inline arrays or objects in the template do not trigger a rebuild.
 
 ---
 
-## Hai chế độ: Edit và Play
+## Two modes: Edit and Play
 
 | | Edit | Play |
 |---|---|---|
-| Mục đích | Tạo asset: gán hàng, giá, tồn kho | Mô phỏng mua hàng |
-| Chuyển chế độ | Nút ✎ / ▶ ở góc phải, hoặc **Tab** | (như bên trái) |
-| Thao tác | Click khe → menu nổi | Nạp tiền → bấm mã → OK |
+| Purpose | Build the asset: products, prices, stock | Simulate buying |
+| Switch | ✎ / ▶ buttons at the top right, or **Tab** | (same) |
+| Interaction | Click a slot → floating menu | Insert money → type code → OK |
 
-**`persistSales`, có lưu kết quả bán hay không:**
+**`persistSales`: whether sales are kept**
 
-- `false`, mặc định khi `allowEdit: true`. Play là **sandbox** chạy trên bản sao: quay về Edit thì tồn kho trở lại như cũ, XML không đổi, không phát `change`.
-- `true`, mặc định khi `allowEdit: false` (máy chỉ bán). Mỗi lần bán trừ kho thật, `toXML()` phản ánh số đã bán, và phát `change` (Vue phát `update:xml`) để bạn lưu DB. Lần bán **không** phải một bước hoàn tác, nên undo/redo không làm "hồi sinh" hàng đã bán.
+- `false`, the default when `allowEdit: true`. Play is a **sandbox** running on a copy: going back to Edit restores the stock, the XML is unchanged and no `change` is emitted.
+- `true`, the default when `allowEdit: false` (sell-only machine). Every sale really reduces stock, `toXML()` reflects it, and `change` is emitted (`update:xml` in Vue) so you can save it. A sale is **not** an undo step, so undo/redo never brings sold items back.
 
 ---
 
 ## Options
 
-| Option | Kiểu | Mặc định | Ý nghĩa |
+| Option | Type | Default | Meaning |
 |---|---|---|---|
-| `xml` | `string` | máy trống 6×10 | XML mô tả máy |
-| `mode` | `'edit' \| 'play'` | `'edit'` | Chế độ ban đầu (luôn là `'play'` khi `allowEdit: false`) |
-| `allowEdit` | `boolean` | `true` | `false` thì máy chỉ bán: ẩn toàn bộ UI chỉnh sửa, `setMode('edit')` bị bỏ qua |
-| `persistSales` | `boolean` | `!allowEdit` | Xem mục trên |
-| `denominations` | `number[]` | `[1000, 2000, 5000, 10000, 20000, 50000]` | Các mệnh giá tiền ảo |
-| `currency` | `{ code, format(v) }` | `vi-VN` (`15.000`) | Cách hiển thị tiền |
-| `ui` | `object` | tất cả bật | `{ toolbar, itemTypePanel, settingsPanel, moneyPanel, modeToggle }`; đặt `false` để ẩn từng phần |
-| `messages` | `{ led?, ui? }` | tiếng Việt | Ghi đè chuỗi LED / giao diện (xem `DEFAULT_MESSAGES`) |
+| `xml` | `string` | empty 6×10 machine | XML describing the machine |
+| `mode` | `'edit' \| 'play'` | `'edit'` | Initial mode (always `'play'` when `allowEdit: false`) |
+| `allowEdit` | `boolean` | `true` | `false` makes a sell-only machine: all editing UI is hidden and `setMode('edit')` is ignored |
+| `persistSales` | `boolean` | `!allowEdit` | See above |
+| `denominations` | `number[]` | `[1000, 2000, 5000, 10000, 20000, 50000]` | Virtual money denominations |
+| `currency` | `{ code, format(v) }` | `vi-VN` (`15.000`) | How money is displayed |
+| `ui` | `object` | all on | `{ toolbar, itemTypePanel, settingsPanel, moneyPanel, modeToggle }`; set `false` to hide a part |
+| `messages` | `{ led?, ui? }` | Vietnamese | Override LED / UI strings (see `DEFAULT_MESSAGES`) |
 
-Chuỗi LED mặc định (không dấu): `MOI CHON HANG`, `MA SAI`, `HET HANG`, `THIEU {v}`, `TIEN THOI {v}`, `SO DU {v}`, `TRA LAI {v}`.
+Default LED strings (Vietnamese, without diacritics): `MOI CHON HANG` (please choose), `MA SAI` (invalid code), `HET HANG` (sold out), `THIEU {v}` (missing), `TIEN THOI {v}` (change), `SO DU {v}` (balance), `TRA LAI {v}` (refund). The UI labels default to Vietnamese too; for an English UI, override them:
+
+```js
+createVendingMachine(el, {
+  messages: {
+    led: { welcome: 'SELECT ITEM', invalid: 'INVALID', soldOut: 'SOLD OUT', missing: 'NEED {v}', change: 'CHANGE {v}', balance: 'CREDIT {v}', refund: 'REFUND {v}' },
+    ui: { edit: 'Edit', play: 'Buy', price: 'Price', stock: 'Stock', refund: 'Refund' /* … */ },
+  },
+  currency: { code: 'USD', format: (v) => `$${(v / 100).toFixed(2)}` },
+});
+```
 
 ---
 
@@ -170,111 +182,111 @@ Chuỗi LED mặc định (không dấu): `MOI CHON HANG`, `MA SAI`, `HET HANG`,
 const vm = createVendingMachine(container: HTMLElement, options?: VendingOptions): VendingMachine
 ```
 
-**Dữ liệu và IO**
+**Data and IO**
 
-| Method / thuộc tính | Mô tả |
+| Method / property | Description |
 |---|---|
-| `load(xml)` | Nạp XML. Sai cú pháp thì ném `VendingXMLError` và máy giữ nguyên. Không phát `change` |
-| `toXML()` | XML của model editor |
-| `download(filename = 'machine.xml')` | Tải file XML về |
-| `model` | Model editor (chỉ đọc) |
-| `activeModel` | Model đang hiển thị (bản sao khi Play sandbox) |
-| `mode` · `setMode(m)` | Chế độ hiện tại / đổi chế độ |
-| `dispose()` | Giải phóng WebGL, listener, DOM (gọi nhiều lần không lỗi) |
+| `load(xml)` | Load XML. Throws `VendingXMLError` on invalid XML and keeps the current machine. Does not emit `change` |
+| `toXML()` | XML of the editor model |
+| `download(filename = 'machine.xml')` | Download the XML file |
+| `model` | Editor model (read-only) |
+| `activeModel` | Model being displayed (the copy in Play sandbox) |
+| `mode` · `setMode(m)` | Current mode / switch mode |
+| `dispose()` | Release WebGL, listeners and DOM (safe to call twice) |
 
-**Mua hàng** (chỉ có tác dụng ở chế độ Play)
+**Buying** (only effective in Play mode)
 
-| Method | Mô tả |
+| Method | Description |
 |---|---|
-| `insertMoney(v)` | Nạp tiền, trả về `false` nếu đang khóa hoặc `v ≤ 0` |
+| `insertMoney(v)` | Insert money; returns `false` if locked or `v ≤ 0` |
 | `press(key)` | `'0'`…`'9'`, `'C'`, `'OK'` |
-| `select(code)` | Tương đương nhập mã rồi OK |
-| `refund()` | Trả lại số dư, trả về số tiền |
-| `balance` · `isDispensing` | Số dư / đang rơi hàng |
+| `select(code)` | Same as typing the code and pressing OK |
+| `refund()` | Return the balance; returns the amount |
+| `balance` · `isDispensing` | Current balance / an item is falling |
 
-**Chỉnh sửa**: `vm.edit.*`, mỗi thay đổi là một bước hoàn tác và phát `change`:
+**Editing**: `vm.edit.*`. Each change is one undo step and emits `change`:
 
-| Method | Mô tả |
+| Method | Description |
 |---|---|
-| `setSlot(code, { itemType?, price?, stock? })` | Gán hoặc sửa khe (khe mới cần `itemType`) |
-| `clearSlot(code)` | Làm trống khe |
-| `upsertItemType(type)` | Thêm hoặc sửa loại hàng |
-| `removeItemType(id)` → `Promise<boolean>` | Xóa loại hàng (có xác nhận nếu đang dùng) |
-| `resizeGrid(rows, cols)` → `Promise<boolean>` | Đổi lưới (có xác nhận nếu làm mất khe) |
-| `setCapacity(n)` → `Promise<boolean>` | Đổi sức chứa (có xác nhận nếu cắt tồn kho) |
-| `setMeta({ name?, theme? })` | Tên máy, màu, độ trong kính |
-| `newMachine(rows, cols)` | Máy trống mới, giữ lại thư viện loại hàng |
-| `undo()` · `redo()` · `canUndo` · `canRedo` | Hoàn tác / làm lại |
+| `setSlot(code, { itemType?, price?, stock? })` | Assign or update a slot (a new slot needs `itemType`) |
+| `clearSlot(code)` | Empty a slot |
+| `upsertItemType(type)` | Add or update an item type |
+| `removeItemType(id)` → `Promise<boolean>` | Delete an item type (asks for confirmation if in use) |
+| `resizeGrid(rows, cols)` → `Promise<boolean>` | Change the grid (asks if slots would be lost) |
+| `setCapacity(n)` → `Promise<boolean>` | Change capacity (asks if stock would be trimmed) |
+| `setMeta({ name?, theme? })` | Machine name, colours, glass opacity |
+| `newMachine(rows, cols)` | New empty machine, keeping the item type library |
+| `undo()` · `redo()` · `canUndo` · `canRedo` | Undo / redo |
 
-**Tiện ích xuất ra**: `parseXML`, `serializeXML`, `VendingXMLError`, `DEFAULT_MODEL`, `SHAPE_DEFAULTS`, `LIMITS`, `slotCode`, `parseCode`, `allCodes`, `DEFAULT_MESSAGES`, cùng đầy đủ type (`MachineModel`, `ItemType`, `Slot`, `Theme`, `Shape`, `VendingOptions`, …).
+**Exported utilities:** `parseXML`, `serializeXML`, `VendingXMLError`, `DEFAULT_MODEL`, `SHAPE_DEFAULTS`, `LIMITS`, `slotCode`, `parseCode`, `allCodes`, `DEFAULT_MESSAGES`, plus all types (`MachineModel`, `ItemType`, `Slot`, `Theme`, `Shape`, `VendingOptions`, …).
 
 ## Events
 
-`vm.on(event, fn)` trả về hàm hủy đăng ký; hoặc dùng `vm.off(event, fn)`.
+`vm.on(event, fn)` returns an unsubscribe function; `vm.off(event, fn)` also works.
 
-| Event | Payload | Khi nào |
+| Event | Payload | When |
 |---|---|---|
-| `change` | `{ xml }` | Editor thay đổi, hoặc bán hàng khi `persistSales: true` |
-| `purchase` | `{ code, itemType, price, change }` | Mua thành công |
-| `error` | `{ code, reason, missing? }` | `reason`: `MA_SAI` · `HET_HANG` · `THIEU_TIEN` |
-| `warning` | `string` | Giá trị bị kẹp, khe/loại hàng không hợp lệ khi load… |
-| `modechange` | `'edit' \| 'play'` | Đổi chế độ |
-| `balance` | `number` | Số dư thay đổi |
+| `change` | `{ xml }` | The editor changed, or a sale happened with `persistSales: true` |
+| `purchase` | `{ code, itemType, price, change }` | Successful purchase |
+| `error` | `{ code, reason, missing? }` | `reason`: `MA_SAI` (invalid code) · `HET_HANG` (sold out) · `THIEU_TIEN` (insufficient money) |
+| `warning` | `string` | Clamped values, invalid slots/types on load… |
+| `modechange` | `'edit' \| 'play'` | Mode switched |
+| `balance` | `number` | Balance changed |
 
-Listener ném lỗi không làm hỏng máy: lỗi được log ra `console.error`.
+A listener that throws cannot break the machine; the error is logged with `console.error`.
 
 ---
 
-## Định dạng XML (version 1)
+## XML format (version 1)
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<vendingMachine version="1" name="Máy sảnh A" rows="6" cols="10" capacity="8">
+<vendingMachine version="1" name="Lobby A" rows="6" cols="10" capacity="8">
   <theme body="#c8102e" accent="#1a1a1a" glassOpacity="0.25"/>
   <itemTypes>
-    <itemType id="cola"  name="Cola"      shape="can"    color="#d40000" labelText="COLA" labelColor="#ffffff"/>
-    <itemType id="water" name="Nước suối" shape="bottle" color="#bfe4ff" labelText="AQUA" labelColor="#0b5cad" accentColor="#0b5cad"/>
+    <itemType id="cola"  name="Cola"  shape="can"    color="#d40000" labelText="COLA" labelColor="#ffffff"/>
+    <itemType id="water" name="Water" shape="bottle" color="#bfe4ff" labelText="AQUA" labelColor="#0b5cad" accentColor="#0b5cad"/>
   </itemTypes>
   <slots>
     <slot code="203" itemType="cola" price="15000" stock="6">
-      <position x="-0.17" y="1.182" z="0.263"/>  <!-- chỉ để tham khảo -->
+      <position x="-0.17" y="1.182" z="0.263"/>  <!-- informational only -->
     </slot>
   </slots>
 </vendingMachine>
 ```
 
-| Phần tử / thuộc tính | Quy tắc |
+| Element / attribute | Rules |
 |---|---|
-| `rows`, `cols` | 4–6, 6–10. Ngoài khoảng thì ép về giới hạn gần nhất và phát `warning` |
-| `capacity` | 1–12, mặc định 8 |
-| `<theme>` | `body`, `accent` (màu), `glassOpacity` (0–1). Thiếu thì dùng mặc định |
-| `<itemType>` | `id` (bắt buộc, duy nhất), `name`, `shape` = `can \| bottle \| box \| bag`, `color`, `labelText`, `labelColor`; tùy chọn `accentColor`, `width` / `height` / `depth` (cm), `model` (để dành cho glTF, được giữ nguyên nhưng chưa render). Thuộc tính lạ được giữ nguyên khi xuất |
-| `<slot>` | Chỉ ghi khe **có hàng**. `code` phải hợp lệ với lưới, `itemType` phải tồn tại (không thì bị bỏ qua kèm `warning`). `stock` kẹp vào `0..capacity`; `price` là số nguyên ≥ 0 |
-| `<position>` | Chỉ để tham khảo. Khi load, thư viện **luôn tính lại** từ lưới |
-| Tiền tệ | Không nằm trong XML; do front-end cấu hình |
+| `rows`, `cols` | 4–6 and 6–10. Out-of-range values are clamped to the nearest limit with a `warning` |
+| `capacity` | 1–12, default 8 |
+| `<theme>` | `body`, `accent` (colours), `glassOpacity` (0–1). Defaults are used if missing |
+| `<itemType>` | `id` (required, unique), `name`, `shape` = `can \| bottle \| box \| bag`, `color`, `labelText`, `labelColor`; optional `accentColor`, `width` / `height` / `depth` (cm), `model` (reserved for glTF: preserved but not rendered yet). Unknown attributes are preserved on export |
+| `<slot>` | Only **stocked** slots are written. `code` must fit the grid and `itemType` must exist; otherwise the slot is skipped with a `warning`. `stock` is clamped to `0..capacity`; `price` is an integer ≥ 0 |
+| `<position>` | Informational only. On load the library **always recomputes** it from the grid |
+| Currency | Not part of the XML; configured by the front-end |
 
-Bảo đảm **round-trip**: `parseXML(serializeXML(m)).model` bằng `m`, kể cả với `&`, `<`, `"`, tiếng Việt có dấu, emoji, xuống dòng và tab. Ký tự XML 1.0 không biểu diễn được sẽ bị loại bỏ khi ghi, nên file luôn load lại được.
+**Round-trip guarantee:** `parseXML(serializeXML(m)).model` equals `m`, including `&`, `<`, `"`, Vietnamese diacritics, emoji, newlines and tabs. Characters that XML 1.0 cannot represent are dropped when writing, so the file always loads again.
 
 ---
 
-## Phím tắt
+## Keyboard shortcuts
 
-Chỉ có tác dụng khi khung máy đang được focus (click vào máy), nên không đụng tới form của trang chủ và nhiều máy trên một trang vẫn chạy độc lập.
+Active only while the machine container has focus (click the machine). They never interfere with forms on the host page, and several machines on one page work independently.
 
-| Phím | Chế độ | Tác dụng |
+| Key | Mode | Action |
 |---|---|---|
-| `Tab` | cả hai | Đổi Edit ⇄ Play (`Shift+Tab` để rời khung) |
-| `Esc` | Edit | Đóng menu khe |
-| `Ctrl+Z` / `Ctrl+Y` (`Ctrl+Shift+Z`) | Edit | Hoàn tác / làm lại |
-| `0`–`9` | Play | Nhập mã |
+| `Tab` | both | Toggle Edit ⇄ Play (`Shift+Tab` leaves the container) |
+| `Esc` | Edit | Close the slot menu |
+| `Ctrl+Z` / `Ctrl+Y` (`Ctrl+Shift+Z`) | Edit | Undo / redo |
+| `0`–`9` | Play | Type the code |
 | `Enter` | Play | OK |
-| `Backspace` / `Delete` / `C` | Play | Xóa mã đang nhập |
+| `Backspace` / `Delete` / `C` | Play | Clear the typed code |
 
 ---
 
-## Tùy biến giao diện
+## Theming
 
-Các panel dùng class tiền tố `vm3d-` và CSS variables đặt trên khung chứa (`.vm3d-root`):
+Panels use `vm3d-` prefixed classes and CSS variables set on the container (`.vm3d-root`):
 
 ```css
 #machine {
@@ -285,90 +297,91 @@ Các panel dùng class tiền tố `vm3d-` và CSS variables đặt trên khung 
 }
 ```
 
-Biến có sẵn: `--vm3d-bg`, `--vm3d-fg`, `--vm3d-muted`, `--vm3d-border`, `--vm3d-accent`, `--vm3d-accent-fg`, `--vm3d-radius`, `--vm3d-shadow`. Trên màn hình hẹp (≤ 640px), các panel tự chuyển xuống đáy khung.
+Available variables: `--vm3d-bg`, `--vm3d-fg`, `--vm3d-muted`, `--vm3d-border`, `--vm3d-accent`, `--vm3d-accent-fg`, `--vm3d-radius`, `--vm3d-shadow`. On narrow screens (≤ 640px) the panels move to the bottom of the container.
 
 ---
 
-## Kiến trúc
+## Architecture
 
 ```
 src/
-  index.ts             createVendingMachine + export công khai
-  VendingMachine.ts    controller: model, history, chế độ, sandbox/persist, API, events
-  presenter.ts         nối controller ↔ 3D ↔ UI DOM (bỏ qua khi headless)
-  model/               TypeScript thuần, không phụ thuộc three/DOM
+  index.ts             createVendingMachine + public exports
+  VendingMachine.ts    controller: model, history, modes, sandbox/persist, API, events
+  presenter.ts         wires controller ↔ 3D ↔ DOM UI (skipped when headless)
+  model/               pure TypeScript, no three/DOM dependency
     types.ts           MachineModel, ItemType, Slot, Theme
-    defaults.ts        giới hạn, kích thước mặc định
-    grid.ts            mã khe, kẹp lưới, tọa độ preset (hằng số hình học dùng chung)
+    defaults.ts        limits, default sizes
+    grid.ts            slot codes, grid clamping, preset positions (shared geometry constants)
     xml.ts             parseXML / serializeXML / VendingXMLError
-    edit.ts            thao tác thuần (trả model mới, không mutate)
-    history.ts         undo/redo dạng snapshot
-  vend/machine.ts      máy trạng thái bán hàng (tiền, mã, khóa, thối)
-  core/                emitter, chuỗi hiển thị, định dạng tiền
-  three/               scene (render-on-demand), body (thân máy), items (4 dạng hàng),
-                       textures (canvas), view (đồng bộ model→scene), anim (tween/easing), dispense
-  ui/                  panel nổi DOM: toolbar, slotMenu, itemTypePanel, settingsPanel,
+    edit.ts            pure operations (return a new model, never mutate)
+    history.ts         snapshot-based undo/redo
+  vend/machine.ts      vending state machine (money, code, lock, change)
+  core/                emitter, display strings, money formatting
+  three/               scene (render-on-demand), body (cabinet), items (4 shapes),
+                       textures (canvas), view (model → scene sync), anim (tween/easing), dispense
+  ui/                  floating DOM panels: toolbar, slotMenu, itemTypePanel, settingsPanel,
                        moneyPanel, modeToggle, dialog, styles
-  vue/index.ts         component <VendingMachine> + VendingMachinePlugin
-demo/                  trang demo Vue (index.html) + vanilla.html (UMD) + sample.xml
-tests/                 Vitest (jsdom), 85 test
+  vue/index.ts         <VendingMachine> component + VendingMachinePlugin
+demo/                  Vue demo (index.html) + vanilla.html (UMD) + sample.xml
+tests/                 Vitest (jsdom), 85 tests
 ```
 
-- **Tách lớp.** `model/` và `vend/` không phụ thuộc three hay DOM nên test được hoàn toàn. Controller chạy được ở chế độ `headless` (không WebGL) để test API.
-- **Render-on-demand.** Chỉ vẽ khi có thay đổi, animation hoặc camera đang chuyển động, nên tiết kiệm pin.
-- **Dùng chung tài nguyên.** Geometry và material của từng loại hàng được dùng chung và đếm tham chiếu giữa các máy trên cùng trang.
+- **Layered.** `model/` and `vend/` have no three/DOM dependency and are fully unit-tested. The controller runs `headless` (no WebGL) so the API is testable too.
+- **Render-on-demand.** The scene renders only on changes, animations or camera movement, which saves battery.
+- **Shared resources.** Each item type's geometry and materials are shared and reference-counted across machines on the same page.
 
 ---
 
-## Phát triển
+## Development
 
-Yêu cầu: Node ≥ 18. Dự án dùng **Vite 6**, vì Vite 8 cần Node ≥ 22.12.
+Requires Node ≥ 18. The project uses **Vite 6**, because Vite 8 requires Node ≥ 22.12.
 
 ```bash
 npm install
-npm run dev          # demo (Vue) có hot reload, tại demo/
-npm test             # Vitest, 85 test
-npx tsc --noEmit     # kiểm tra type
+npm run dev          # Vue demo with hot reload, from demo/
+npm test             # Vitest, 85 tests
+npx tsc --noEmit     # type check
 npm run build        # dist/: index.js (ESM), vue.js, vending-machine-3d.umd.js, *.d.ts
-npm run size         # kiểm tra giới hạn 60 KB gzip cho lõi
-npm run build:demo   # demo-dist/ (index.html + vanilla.html), deploy tĩnh được (GitHub Pages…)
-npm run preview      # xem bản demo đã build
+npm run size         # enforce the 60 KB gzip limit for the core
+npm run build:demo   # demo-dist/ (index.html + vanilla.html), deployable as static files (GitHub Pages…)
+npm run preview      # preview the built demo
 ```
 
-| File build | Nội dung |
+| Build file | Contents |
 |---|---|
-| `dist/index.js` | ESM lõi, three để external (khoảng 22 KB gzip) |
-| `dist/vue.js` | Wrapper Vue, import lõi (khoảng 1 KB gzip) |
-| `dist/vending-machine-3d.umd.js` | UMD standalone, gồm three.js (khoảng 159 KB gzip), global `VendingMachine3D` |
+| `dist/index.js` | Core ESM, three external (~22 KB gzip) |
+| `dist/vue.js` | Vue wrapper, imports the core (~1 KB gzip) |
+| `dist/vending-machine-3d.umd.js` | Standalone UMD including three.js (~159 KB gzip), global `VendingMachine3D` |
 | `dist/**/*.d.ts` | Type declarations |
 
 ---
 
-## Giới hạn đã biết và hướng phát triển
+## Known limitations and roadmap
 
-Đã biết, mức nhỏ (ghi lại từ review cuối):
+Known minor issues (from the final review):
 
-- Bộ nhớ đệm hình 3D lớn dần theo mỗi kiểu dáng mới (màu, nhãn), chỉ được giải phóng khi máy cuối cùng trên trang bị hủy.
-- Vật liệu của khung highlight khe không được giải phóng khi hủy.
-- Nếu XML được load trong lúc hộp xác nhận thu nhỏ lưới đang mở, danh sách khe đã hiện có thể lệch.
-- `edit.*` gọi trong lúc Play sandbox thì không thấy ngay, phải về Edit mới thấy.
-- Tiền đã nạp mất đi khi đổi chế độ hoặc load, không phát event trả tiền.
-- Thuộc tính lạ có namespace (`x:foo`) không round-trip được.
-- Sau `dispose()`, khung chứa vẫn giữ `tabindex` và `position: relative`.
-- Giao diện mobile mới có CSS media query, chưa kiểm thử trên thiết bị thật.
+- The shared 3D cache grows with every new look (colour, label) and is freed only when the last machine on the page is disposed.
+- The slot highlight materials are not disposed on `dispose()`.
+- If XML is loaded while the shrink-grid confirmation is open, the listed slots may be out of date.
+- `edit.*` calls made during Play sandbox are not visible until you return to Edit.
+- Inserted money disappears on mode switch or load, without a refund event.
+- Unknown namespaced attributes (`x:foo`) do not round-trip.
+- After `dispose()`, the container keeps its `tabindex` and `position: relative`.
+- The mobile layout relies on CSS media queries only and has not been tested on real devices.
 
-Hướng tiếp theo:
+Next steps:
 
-- Render model `.glb` khi `itemType` có thuộc tính `model`.
-- Kéo-thả loại hàng từ panel vào khe.
-- Âm thanh (tiếng lò xo, tiếng rơi) có thể bật/tắt.
-- i18n đầy đủ hơn, ví dụ bộ chuỗi tiếng Anh dựng sẵn.
+- Render `.glb` models when an `itemType` has a `model` attribute.
+- Drag and drop item types from the panel onto slots.
+- Optional sound effects (spiral, drop).
+- Fuller i18n, e.g. a ready-made English string set.
 
-## Tài liệu liên quan
+## Related documents
 
-- Thiết kế (spec): [`docs/superpowers/specs/2026-11-09-vending-machine-3d-design.md`](docs/superpowers/specs/2026-11-09-vending-machine-3d-design.md)
-- Kế hoạch triển khai: [`docs/superpowers/plans/2026-11-09-vending-machine-3d.md`](docs/superpowers/plans/2026-11-09-vending-machine-3d.md)
-- Nhật ký phát triển (quyết định, review, việc còn lại): [`docs/DEVELOPMENT-LOG.md`](docs/DEVELOPMENT-LOG.md)
+- Design spec (Vietnamese): [`docs/superpowers/specs/2026-11-09-vending-machine-3d-design.md`](docs/superpowers/specs/2026-11-09-vending-machine-3d-design.md)
+- Implementation plan: [`docs/superpowers/plans/2026-11-09-vending-machine-3d.md`](docs/superpowers/plans/2026-11-09-vending-machine-3d.md)
+- Development log (Vietnamese; decisions, review, open items): [`docs/DEVELOPMENT-LOG.md`](docs/DEVELOPMENT-LOG.md)
+- Vietnamese README: [`README.vi.md`](README.vi.md)
 
 ## License
 
