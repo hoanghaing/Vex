@@ -131,7 +131,7 @@ export class MachineView {
 
   focusPose(code: string): CameraPose {
     const c = this.body!.slotCenter(code);
-    return { position: new THREE.Vector3(c.x + 0.08, c.y + 0.08, 0.95), target: c };
+    return { position: new THREE.Vector3(c.x + 0.1, c.y + 0.1, 1.25), target: c };
   }
 
   focusSlot(code: string | null): Promise<void> {
