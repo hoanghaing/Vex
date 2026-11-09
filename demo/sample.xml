@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vendingMachine version="1" name="VENDY 3D" rows="6" cols="10" capacity="8">
+  <theme body="#c8102e" accent="#1f2329" glassOpacity="0.22"/>
+  <itemTypes>
+    <itemType id="cola" name="Cola" shape="can" color="#d40000" labelText="COLA" labelColor="#ffffff"/>
+    <itemType id="lime" name="Lime Soda" shape="can" color="#2fbf4a" labelText="LIME" labelColor="#ffffff" accentColor="#ffe14d"/>
+    <itemType id="coffee" name="Cà phê sữa" shape="can" color="#5b3a29" labelText="CAFE" labelColor="#f3d9b1"/>
+    <itemType id="water" name="Nước suối" shape="bottle" color="#bfe4ff" labelText="AQUA" labelColor="#0b5cad" accentColor="#0b5cad"/>
+    <itemType id="tea" name="Trà xanh" shape="bottle" color="#d8f0a8" labelText="TEA" labelColor="#2d6a1f" accentColor="#2d6a1f"/>
+    <itemType id="cookie" name="Bánh quy" shape="box" color="#f2b134" labelText="COOKIE" labelColor="#5a2d0c" accentColor="#ffffff"/>
+    <itemType id="choco" name="Socola" shape="box" color="#3b1f14" labelText="CHOCO" labelColor="#ffd28a" accentColor="#c0392b"/>
+    <itemType id="chips" name="Snack khoai tây" shape="bag" color="#ffd400" labelText="CHIPS" labelColor="#d10000" accentColor="#d10000"/>
+    <itemType id="nori" name="Rong biển" shape="bag" color="#1e7a46" labelText="NORI" labelColor="#ffffff" accentColor="#0c3d22"/>
+  </itemTypes>
+  <slots>
+    <slot code="101" itemType="chips" price="12000" stock="6"/>
+    <slot code="102" itemType="chips" price="12000" stock="8"/>
+    <slot code="103" itemType="nori" price="15000" stock="5"/>
+    <slot code="104" itemType="nori" price="15000" stock="7"/>
+    <slot code="105" itemType="chips" price="12000" stock="3"/>
+    <slot code="106" itemType="nori" price="15000" stock="8"/>
+    <slot code="201" itemType="cookie" price="10000" stock="8"/>
+    <slot code="202" itemType="cookie" price="10000" stock="6"/>
+    <slot code="203" itemType="choco" price="18000" stock="7"/>
+    <slot code="204" itemType="choco" price="18000" stock="4"/>
+    <slot code="205" itemType="cookie" price="10000" stock="8"/>
+    <slot code="206" itemType="choco" price="18000" stock="2"/>
+    <slot code="207" itemType="cookie" price="10000" stock="5"/>
+    <slot code="301" itemType="water" price="8000" stock="8"/>
+    <slot code="302" itemType="water" price="8000" stock="8"/>
+    <slot code="303" itemType="tea" price="12000" stock="6"/>
+    <slot code="304" itemType="tea" price="12000" stock="7"/>
+    <slot code="305" itemType="water" price="8000" stock="5"/>
+    <slot code="306" itemType="tea" price="12000" stock="8"/>
+    <slot code="401" itemType="cola" price="15000" stock="8"/>
+    <slot code="402" itemType="cola" price="15000" stock="7"/>
+    <slot code="403" itemType="lime" price="15000" stock="8"/>
+    <slot code="404" itemType="lime" price="15000" stock="6"/>
+    <slot code="405" itemType="coffee" price="17000" stock="8"/>
+    <slot code="406" itemType="coffee" price="17000" stock="5"/>
+    <slot code="407" itemType="cola" price="15000" stock="4"/>
+    <slot code="408" itemType="lime" price="15000" stock="8"/>
+    <slot code="501" itemType="coffee" price="17000" stock="8"/>
+    <slot code="502" itemType="cola" price="15000" stock="8"/>
+    <slot code="503" itemType="water" price="8000" stock="6"/>
+    <slot code="601" itemType="cola" price="0" stock="1"/>
+  </slots>
+</vendingMachine>
