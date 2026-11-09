@@ -2,13 +2,14 @@ import * as THREE from 'three';
 import type { ConfirmRequest, Mode, Presenter, VendingMachine } from './VendingMachine';
 import type { MachineModel } from './model/types';
 import { AnimationQueue, type Tween, easing, tween } from './three/anim';
-import { playDispense } from './three/dispense';
+import { pickUp, playDispense } from './three/dispense';
 import { SceneHost } from './three/scene';
 import { type CameraPose, MachineView } from './three/view';
 import { confirmDialog } from './ui/dialog';
 import { h } from './ui/dom';
 import { createItemTypePanel } from './ui/itemTypePanel';
 import { createModeToggle } from './ui/modeToggle';
+import { createMoneyPanel } from './ui/moneyPanel';
 import { createSettingsPanel } from './ui/settingsPanel';
 import { createSlotMenu } from './ui/slotMenu';
 import { ensureStyles } from './ui/styles';
@@ -58,7 +59,9 @@ export function createPresenter(vm: VendingMachine, container: HTMLElement): Pre
   const types = editEnabled && ui.itemTypePanel !== false ? createItemTypePanel(vm, container) : null;
   const toolbar = editEnabled && ui.toolbar !== false ? createToolbar(vm, container, { toast, toggleSettings: () => settings?.toggle() }) : null;
   const modeToggle = editEnabled && ui.modeToggle !== false ? createModeToggle(vm, container) : null;
+  const money = ui.moneyPanel !== false ? createMoneyPanel(vm, container) : null;
   if (toolbar) cleanups.push(toolbar.dispose);
+  if (money) cleanups.push(money.dispose);
   const editEls = [slotMenu?.el, settings?.el, types?.el, toolbar?.el].filter(Boolean) as HTMLElement[];
   const settingsWasOpen = { v: false };
 
@@ -74,6 +77,8 @@ export function createPresenter(vm: VendingMachine, container: HTMLElement): Pre
       el.style.display = isEdit ? '' : 'none';
     }
     if (!isEdit) slotMenu?.close();
+    money?.setVisible(!isEdit);
+    money?.update();
     settings?.update();
     types?.update();
     toolbar?.update();
@@ -188,6 +193,7 @@ export function createPresenter(vm: VendingMachine, container: HTMLElement): Pre
       lastLed = text;
       view.body?.led.set(text);
       host.requestRender();
+      money?.update();
     },
     confirm(req: ConfirmRequest) {
       const message = req.kind === 'resize' ? t.confirmResize : req.kind === 'capacity' ? t.confirmCapacity : t.confirmRemoveType;
@@ -217,6 +223,56 @@ export function createPresenter(vm: VendingMachine, container: HTMLElement): Pre
     onPlayClick = (e) => x.click(e, pickAt(e, playTargets()));
     onPlayKey = x.key;
   }
+
+  // ---------- play controls ----------
+  const pressKeyVisual = (k: string) => {
+    const key = view.body?.keyMeshes.get(k);
+    if (!key) return;
+    const z = key.userData.restZ as number;
+    key.position.z = z - 0.007;
+    host.requestRender();
+    setTimeout(() => { key.position.z = z; host.requestRender(); }, 90);
+  };
+  const press = (k: string) => {
+    pressKeyVisual(k);
+    vm.press(k as never);
+  };
+  let ledTimer = 0;
+  const revertLedSoon = () => {
+    clearTimeout(ledTimer);
+    ledTimer = window.setTimeout(() => { if (!vm.isDispensing && mode === 'play') presenter.led(vm.ledIdleText); }, 1500);
+  };
+  cleanups.push(vm.on('error', revertLedSoon), vm.on('balance', (v) => { if (v === 0 && !vm.isDispensing) revertLedSoon(); }), () => clearTimeout(ledTimer));
+
+  extendPlay({
+    targets: () => {
+      const b = view.body;
+      if (!b) return [];
+      return [...b.pick.keys.keys(), b.pick.coinSlot, b.pick.refundBtn, b.pick.trayFlap, ...view.trayGroup.children];
+    },
+    click: (_e, hit) => {
+      const b = view.body;
+      if (!hit || !b) return;
+      let o: THREE.Object3D | null = hit;
+      while (o && o.parent !== view.trayGroup && o !== b.group) o = o.parent;
+      if (o && o.parent === view.trayGroup) return void pickUp(host, o);
+      const key = b.pick.keys.get(hit);
+      if (key) return press(key);
+      if (hit === b.pick.refundBtn) return void vm.refund();
+      if (hit === b.pick.coinSlot) return void vm.insertMoney(vm.options.denominations[0]);
+      if (hit === b.pick.trayFlap) {
+        const last = view.trayGroup.children.at(-1);
+        if (last) void pickUp(host, last);
+      }
+    },
+    key: (e) => {
+      if (/^[0-9]$/.test(e.key)) press(e.key);
+      else if (e.key === 'Enter') press('OK');
+      else if (e.key === 'Backspace' || e.key === 'Delete' || e.key.toLowerCase() === 'c') press('C');
+      else return;
+      e.preventDefault();
+    },
+  });
 
   syncUI();
   return presenter;

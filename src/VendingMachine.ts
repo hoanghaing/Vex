@@ -134,6 +134,8 @@ export class VendingMachine {
   get mode(): Mode { return this._mode; }
   get balance(): number { return this.vend.balance; }
   get isDispensing(): boolean { return this.vend.locked; }
+  /** Text the LED shows when idle (welcome or balance). */
+  get ledIdleText(): string { return this.vend.idleText(); }
   get canUndo(): boolean { return this.history.canUndo; }
   get canRedo(): boolean { return this.history.canRedo; }
 
