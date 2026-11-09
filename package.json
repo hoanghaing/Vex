@@ -10,9 +10,10 @@
   "scripts": {
     "test": "vitest run",
     "dev": "vite --config vite.demo.config.ts",
-    "build": "BUILD_TARGET=es vite build && BUILD_TARGET=umd vite build",
-    "build:demo": "vite build --config vite.demo.config.ts",
-    "size": "node scripts/size.mjs"
+    "build": "vite build --mode es && vite build --mode umd && tsc -p tsconfig.build.json",
+    "size": "node scripts/size.mjs",
+    "build:demo": "npm run build && node scripts/copy-umd.mjs && vite build --config vite.demo.config.ts",
+    "preview": "vite preview --config vite.demo.config.ts"
   },
   "peerDependencies": {
     "three": ">=0.160.0",
@@ -31,8 +32,36 @@
     "three": "^0.187.0",
     "typescript": "^5.9.3",
     "vite": "^6.4.6",
-    "vite-plugin-dts": "^4.5.4",
     "vitest": "^3.2.7",
     "vue": "3.5"
-  }
+  },
+  "main": "./dist/vending-machine-3d.umd.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/vending-machine-3d.umd.js",
+  "jsdelivr": "./dist/vending-machine-3d.umd.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/vending-machine-3d.umd.js"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue.js"
+    },
+    "./umd": "./dist/vending-machine-3d.umd.js",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "keywords": [
+    "three",
+    "threejs",
+    "vending-machine",
+    "3d",
+    "editor",
+    "xml",
+    "vue",
+    "vue3"
+  ]
 }

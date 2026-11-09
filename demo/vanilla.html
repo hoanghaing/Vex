@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vending Machine 3D (JS thuần)</title>
+    <style>
+      html, body { margin: 0; height: 100%; font: 14px system-ui, sans-serif; background: #eef1f5; }
+      header { padding: 8px 14px; background: #15181d; color: #fff; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      header code { background: #2a2f37; padding: 2px 6px; border-radius: 4px; }
+      #machine { height: calc(100% - 44px); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>JS thuần (UMD)</strong>
+      <span>1 thẻ <code>&lt;script&gt;</code>, không cần bundler hay Vue, máy chỉ bán (sold stock persists)</span>
+    </header>
+    <div id="machine"></div>
+
+    <!-- Standalone UMD bundle (three.js included) -->
+    <script src="./vending-machine-3d.umd.js"></script>
+    <script>
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<vendingMachine version="1" name="MINI MART" rows="4" cols="6" capacity="6">
+  <theme body="#1e5aa8" accent="#14181e" glassOpacity="0.2"/>
+  <itemTypes>
+    <itemType id="cola" name="Cola" shape="can" color="#d40000" labelText="COLA" labelColor="#ffffff"/>
+    <itemType id="water" name="Water" shape="bottle" color="#bfe4ff" labelText="AQUA" labelColor="#0b5cad" accentColor="#0b5cad"/>
+    <itemType id="cookie" name="Cookie" shape="box" color="#f2b134" labelText="COOKIE" labelColor="#5a2d0c"/>
+    <itemType id="chips" name="Chips" shape="bag" color="#ffd400" labelText="CHIPS" labelColor="#d10000"/>
+  </itemTypes>
+  <slots>
+    <slot code="101" itemType="chips" price="12000" stock="6"/>
+    <slot code="102" itemType="chips" price="12000" stock="4"/>
+    <slot code="201" itemType="cookie" price="10000" stock="6"/>
+    <slot code="202" itemType="cookie" price="10000" stock="5"/>
+    <slot code="301" itemType="water" price="8000" stock="6"/>
+    <slot code="302" itemType="water" price="8000" stock="3"/>
+    <slot code="401" itemType="cola" price="15000" stock="6"/>
+    <slot code="402" itemType="cola" price="15000" stock="2"/>
+  </slots>
+</vendingMachine>`;
+
+      const vm = VendingMachine3D.createVendingMachine(document.getElementById('machine'), {
+        xml,
+        allowEdit: false,
+        denominations: [5000, 10000, 20000],
+      });
+      vm.on('purchase', (e) => console.log('purchase', e));
+      vm.on('change', (e) => console.log('stock changed, save this XML to your DB:', e.xml.length, 'bytes'));
+      window.vm = vm;
+    </script>
+  </body>
+</html>
