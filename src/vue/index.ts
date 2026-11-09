@@ -88,17 +88,20 @@ export const VendingMachine = defineComponent({
       if (m && instance.value && instance.value.mode !== m) instance.value.setMode(m);
     });
 
-    watch(
-      () => [props.allowEdit, props.persistSales, props.denominations, props.currency, props.ui, props.messages, props.headless],
-      () => {
-        const vm = instance.value;
-        const xml = vm ? vm.toXML() : props.xml;
-        const mode = vm ? vm.mode : props.mode;
-        destroy();
-        create(xml, mode);
-      },
-      { deep: true },
-    );
+    // Recreate only when structural options change by value: inline literals in a parent
+    // template (e.g. :denominations="[...]") get a new identity on every render.
+    const structuralKey = () =>
+      JSON.stringify([
+        props.allowEdit, props.persistSales, props.denominations, props.ui, props.messages, props.headless,
+        props.currency?.code, props.currency?.format ? String(props.currency.format) : null,
+      ]);
+    watch(structuralKey, () => {
+      const vm = instance.value;
+      const xml = vm ? vm.toXML() : props.xml;
+      const mode = vm ? vm.mode : props.mode;
+      destroy();
+      create(xml, mode);
+    });
 
     expose({
       get instance() { return instance.value; },

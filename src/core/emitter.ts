@@ -15,7 +15,14 @@ export class Emitter<E extends { [K in keyof E]: Handler }> {
   }
 
   emit<K extends keyof E>(event: K, ...args: Parameters<E[K]>): void {
-    this.handlers.get(event)?.forEach((fn) => fn(...args));
+    this.handlers.get(event)?.forEach((fn) => {
+      try {
+        fn(...args);
+      } catch (err) {
+        // A faulty listener must not break the caller (e.g. leave the machine locked).
+        console.error(`[vending-machine-3d] "${String(event)}" listener threw:`, err);
+      }
+    });
   }
 
   clear(): void {

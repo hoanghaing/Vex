@@ -210,30 +210,40 @@ export class VendingMachine {
 
   private onDispense(e: PurchaseEvent): void {
     const run = ++this.dispensing;
-    const anim = this.presenter && !this.options._holdDispense ? this.presenter.dispense(e.code) : null;
+    const hold = !!this.options._holdDispense;
+    const anim = this.presenter && !hold ? this.presenter.dispense(e.code) : null;
+    // Arrange the unlock before notifying listeners, so a throwing host handler can't leave us locked.
+    if (anim) {
+      void anim.finally(() => {
+        if (run !== this.dispensing || this.disposed) return;
+        this.vend.unlock();
+        this.presenter?.led(this.vend.idleText());
+      });
+    } else if (!hold) {
+      this.vend.unlock();
+    }
     this.decrementStock(e.code);
     this.emitter.emit('purchase', e);
-    if (this.options._holdDispense) return;
-    if (!anim) {
-      this.vend.unlock();
-      return;
-    }
-    void anim.finally(() => {
-      if (run !== this.dispensing || this.disposed) return;
-      this.vend.unlock();
-      this.presenter?.led(this.vend.idleText());
-    });
   }
 
   private decrementStock(code: string): void {
-    const target = this.activeModel;
-    const slot = target.slots[code];
+    const slot = this.activeModel.slots[code];
     if (!slot) return;
     if (this.playModel) {
       slot.stock = Math.max(0, slot.stock - 1);
-    } else {
-      this.commit(ops.setSlot(this._model, code, { stock: slot.stock - 1 }), false);
+      return;
     }
+    // Persisted sale: not an undoable edit. Apply it to the model and to every history entry,
+    // so undo/redo never brings sold items back.
+    const itemType = slot.itemType;
+    const sell = (m: MachineModel) => {
+      const s = m.slots[code];
+      if (s && s.itemType === itemType) s.stock = Math.max(0, s.stock - 1);
+      return m;
+    };
+    this._model = sell(structuredClone(this._model));
+    this.history.mapAll(sell);
+    this.emitter.emit('change', { xml: this.toXML() });
   }
 
   private stopDispense(): void {

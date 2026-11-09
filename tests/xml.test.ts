@@ -91,3 +91,22 @@ describe('XML', () => {
     expect(r.model.capacity).toBe(8);
   });
 });
+
+describe('XML whitespace and control characters (review #4)', () => {
+  it('round-trips newline, carriage return and tab in attributes', () => {
+    const m = sample();
+    m.name = 'Dòng 1\nDòng 2\tTab\r';
+    m.itemTypes[0].labelText = 'A\nB';
+    const back = parseXML(serializeXML(m)).model;
+    expect(back.name).toBe('Dòng 1\nDòng 2\tTab\r');
+    expect(back.itemTypes[0].labelText).toBe('A\nB');
+  });
+
+  it('strips characters XML 1.0 cannot represent so output stays loadable', () => {
+    const m = sample();
+    m.name = 'bad\u0001name￾';
+    const xml = serializeXML(m);
+    expect(() => parseXML(xml)).not.toThrow();
+    expect(parseXML(xml).model.name).toBe('badname');
+  });
+});

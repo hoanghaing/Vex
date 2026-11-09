@@ -93,3 +93,50 @@ describe('Vue wrapper', () => {
     expect(app.component).toHaveBeenCalledWith('VendingMachine', VendingMachineComponent);
   });
 });
+
+import { defineComponent, h, ref } from 'vue';
+
+describe('Vue wrapper with inline props (review #1)', () => {
+  it('does not recreate the machine when the parent re-renders with equal inline props', async () => {
+    let readyCount = 0;
+    let machine: VendingMachine | null = null;
+    const Parent = defineComponent({
+      setup() {
+        const xml = ref(XML);
+        return () => h(VendingMachineComponent, {
+          headless: true,
+          xml: xml.value,
+          'onUpdate:xml': (v: string) => (xml.value = v),
+          denominations: [1000, 2000],
+          ui: { toolbar: false },
+          messages: { led: { welcome: 'HI' } },
+          onReady: (vm: VendingMachine) => { readyCount++; machine = vm; },
+        });
+      },
+    });
+    const w = mount(Parent);
+    await nextTick();
+    machine!.edit.setSlot('101', { itemType: 'cola', price: 1, stock: 1 });
+    await nextTick();
+    await nextTick();
+    expect(readyCount).toBe(1);
+    expect(machine!.isDisposed).toBe(false);
+    w.unmount();
+  });
+
+  it('still recreates when an inline prop changes by value', async () => {
+    const den = ref([1000]);
+    let readyCount = 0;
+    const Parent = defineComponent({
+      setup() {
+        return () => h(VendingMachineComponent, { headless: true, xml: XML, denominations: [...den.value], onReady: () => readyCount++ });
+      },
+    });
+    const w = mount(Parent);
+    den.value = [1000, 5000];
+    await nextTick();
+    await nextTick();
+    expect(readyCount).toBe(2);
+    w.unmount();
+  });
+});

@@ -173,3 +173,39 @@ describe('public API', () => {
     expect(vm.model).toMatchObject({ rows: 6, cols: 10 });
   });
 });
+
+describe('review fixes', () => {
+  it('#2 undo after a persisted sale keeps the sold stock', () => {
+    const { vm } = make({ persistSales: true });
+    vm.edit.setSlot('101', { itemType: 'cola', price: 1000, stock: 2 });
+    vm.setMode('play');
+    buy(vm, '203', 15000);
+    vm.setMode('edit');
+    vm.edit.undo(); // undoes the setSlot('101'), not the sale
+    expect(vm.model.slots['101']).toBeUndefined();
+    expect(vm.model.slots['203'].stock).toBe(5);
+    vm.edit.redo();
+    expect(vm.model.slots['101']).toBeDefined();
+    expect(vm.model.slots['203'].stock).toBe(5);
+  });
+
+  it('#2 a sale does not create an undo step', () => {
+    const { vm } = make({ persistSales: true });
+    vm.setMode('play');
+    buy(vm, '203', 15000);
+    expect(vm.canUndo).toBe(false);
+  });
+
+  it('#3 a throwing purchase/change listener does not lock the machine', () => {
+    const { vm } = make({ allowEdit: false });
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vm.on('purchase', () => { throw new Error('host bug'); });
+    vm.on('change', () => { throw new Error('db down'); });
+    let second = 0;
+    vm.on('purchase', () => second++);
+    expect(() => buy(vm, '203', 15000)).not.toThrow();
+    expect(second).toBe(1);
+    expect(vm.insertMoney(1000)).toBe(true);
+    spy.mockRestore();
+  });
+});

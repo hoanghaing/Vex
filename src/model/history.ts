@@ -29,6 +29,11 @@ export class History<T> {
     return this.current;
   }
 
+  /** Apply a change to every stored state (e.g. a sale that must survive undo/redo). */
+  mapAll(fn: (state: T) => T): void {
+    this.stack = this.stack.map((s) => fn(structuredClone(s)));
+  }
+
   reset(state: T): void {
     this.stack = [structuredClone(state)];
     this.index = 0;

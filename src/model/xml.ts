@@ -12,8 +12,13 @@ export class VendingXMLError extends Error {
 
 const ITEM_ATTRS = ['id', 'name', 'shape', 'color', 'labelText', 'labelColor', 'accentColor', 'width', 'height', 'depth', 'model'];
 
+// Characters XML 1.0 cannot represent are dropped; whitespace that attribute-value
+// normalisation would collapse is written as character references.
+const INVALID_XML = /[^\u0009\u000A\u000D -퟿-�\u{10000}-\u{10FFFF}]/gu;
 const esc = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  s.replace(INVALID_XML, '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/\n/g, '&#10;').replace(/\r/g, '&#13;').replace(/\t/g, '&#9;');
 
 const attr = (name: string, value: unknown) =>
   value === undefined || value === null || value === '' ? '' : ` ${name}="${esc(String(value))}"`;
