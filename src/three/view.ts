@@ -14,6 +14,7 @@ export class MachineView {
   private bodySig = '';
   private items = new Map<string, THREE.Object3D[]>();
   private itemsGroup = new THREE.Group();
+  readonly trayGroup = new THREE.Group();
   private hoverBox: THREE.LineSegments;
   private selectBox: THREE.LineSegments;
   /** Hook to animate camera moves; default is instant. */
@@ -27,7 +28,7 @@ export class MachineView {
   constructor(readonly host: SceneHost) {
     retainItemCache();
     this.itemsGroup.name = 'vm3d-items';
-    host.scene.add(this.itemsGroup);
+    host.scene.add(this.itemsGroup, this.trayGroup);
     const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(SLOT_W * 0.98, SHELF_H - SHELF_T - 0.004, SLOT_DEPTH));
     this.hoverBox = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: '#4da3ff', transparent: true, opacity: 0.7 }));
     this.selectBox = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: '#ffb300' }));
@@ -72,6 +73,18 @@ export class MachineView {
       }
       this.items.set(s.code, list);
     }
+  }
+
+  addToTray(o: THREE.Object3D): void {
+    this.trayGroup.attach(o);
+    // keep at most 6 items in the tray
+    while (this.trayGroup.children.length > 6) this.trayGroup.children[0].removeFromParent();
+    this.host.requestRender();
+  }
+
+  clearTray(): void {
+    this.trayGroup.clear();
+    this.host.requestRender();
   }
 
   itemsOf(code: string): THREE.Object3D[] {
@@ -145,7 +158,8 @@ export class MachineView {
       this.body = null;
     }
     this.itemsGroup.clear();
-    this.host.scene.remove(this.itemsGroup, this.hoverBox, this.selectBox);
+    this.trayGroup.clear();
+    this.host.scene.remove(this.itemsGroup, this.trayGroup, this.hoverBox, this.selectBox);
     this.hoverBox.geometry.dispose();
     releaseItemCache();
   }
