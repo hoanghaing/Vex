@@ -26,8 +26,8 @@
 - [Tùy biến giao diện](#tùy-biến-giao-diện)
 - [Kiến trúc](#kiến-trúc)
 - [Phát triển](#phát-triển)
-- [Giới hạn đã biết và hướng phát triển](#giới-hạn-đã-biết-và-hướng-phát-triển)
-- [Tài liệu liên quan](#tài-liệu-liên-quan)
+- [Hướng phát triển](#hướng-phát-triển)
+- [License](#license)
 
 ---
 
@@ -346,32 +346,12 @@ npm run preview      # xem bản demo đã build
 
 ---
 
-## Giới hạn đã biết và hướng phát triển
-
-Đã biết, mức nhỏ (ghi lại từ review cuối):
-
-- Bộ nhớ đệm hình 3D lớn dần theo mỗi kiểu dáng mới (màu, nhãn), chỉ được giải phóng khi máy cuối cùng trên trang bị hủy.
-- Vật liệu của khung highlight khe không được giải phóng khi hủy.
-- Nếu XML được load trong lúc hộp xác nhận thu nhỏ lưới đang mở, danh sách khe đã hiện có thể lệch.
-- `edit.*` gọi trong lúc Play sandbox thì không thấy ngay, phải về Edit mới thấy.
-- Tiền đã nạp mất đi khi đổi chế độ hoặc load, không phát event trả tiền.
-- Thuộc tính lạ có namespace (`x:foo`) không round-trip được.
-- Sau `dispose()`, khung chứa vẫn giữ `tabindex` và `position: relative`.
-- Giao diện mobile mới có CSS media query, chưa kiểm thử trên thiết bị thật.
-
-Hướng tiếp theo:
+## Hướng phát triển
 
 - Render model `.glb` khi `itemType` có thuộc tính `model`.
 - Kéo-thả loại hàng từ panel vào khe.
-- Âm thanh (tiếng lò xo, tiếng rơi) có thể bật/tắt.
-- i18n đầy đủ hơn, ví dụ bộ chuỗi tiếng Anh dựng sẵn.
-
-## Tài liệu liên quan
-
-- Thiết kế (spec): [`docs/superpowers/specs/2026-11-09-vending-machine-3d-design.md`](docs/superpowers/specs/2026-11-09-vending-machine-3d-design.md)
-- Kế hoạch triển khai: [`docs/superpowers/plans/2026-11-09-vending-machine-3d.md`](docs/superpowers/plans/2026-11-09-vending-machine-3d.md)
-- Nhật ký phát triển (quyết định, review, việc còn lại): [`docs/DEVELOPMENT-LOG.md`](docs/DEVELOPMENT-LOG.md)
-- English README: [`README.md`](README.md)
+- Âm thanh (lò xo, tiếng rơi) có thể bật/tắt.
+- Bộ chuỗi tiếng Anh dựng sẵn.
 
 ## License
 

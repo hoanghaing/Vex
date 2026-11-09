@@ -26,8 +26,8 @@
 - [Theming](#theming)
 - [Architecture](#architecture)
 - [Development](#development)
-- [Known limitations and roadmap](#known-limitations-and-roadmap)
-- [Related documents](#related-documents)
+- [Roadmap](#roadmap)
+- [License](#license)
 
 ---
 
@@ -356,32 +356,12 @@ npm run preview      # preview the built demo
 
 ---
 
-## Known limitations and roadmap
-
-Known minor issues (from the final review):
-
-- The shared 3D cache grows with every new look (colour, label) and is freed only when the last machine on the page is disposed.
-- The slot highlight materials are not disposed on `dispose()`.
-- If XML is loaded while the shrink-grid confirmation is open, the listed slots may be out of date.
-- `edit.*` calls made during Play sandbox are not visible until you return to Edit.
-- Inserted money disappears on mode switch or load, without a refund event.
-- Unknown namespaced attributes (`x:foo`) do not round-trip.
-- After `dispose()`, the container keeps its `tabindex` and `position: relative`.
-- The mobile layout relies on CSS media queries only and has not been tested on real devices.
-
-Next steps:
+## Roadmap
 
 - Render `.glb` models when an `itemType` has a `model` attribute.
 - Drag and drop item types from the panel onto slots.
 - Optional sound effects (spiral, drop).
-- Fuller i18n, e.g. a ready-made English string set.
-
-## Related documents
-
-- Design spec (Vietnamese): [`docs/superpowers/specs/2026-11-09-vending-machine-3d-design.md`](docs/superpowers/specs/2026-11-09-vending-machine-3d-design.md)
-- Implementation plan: [`docs/superpowers/plans/2026-11-09-vending-machine-3d.md`](docs/superpowers/plans/2026-11-09-vending-machine-3d.md)
-- Development log (Vietnamese; decisions, review, open items): [`docs/DEVELOPMENT-LOG.md`](docs/DEVELOPMENT-LOG.md)
-- Vietnamese README: [`README.vi.md`](README.vi.md)
+- A ready-made English string set.
 
 ## License
 

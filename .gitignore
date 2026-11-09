@@ -3,3 +3,6 @@ node_modules/
 dist/
 demo-dist/
 demo/public/vending-machine-3d.umd.js
+
+# private notes (kept locally, not published)
+docs/
